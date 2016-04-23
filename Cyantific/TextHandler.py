@@ -10,7 +10,7 @@ class TextHandler(object):
 
 	def __init__(self):
 
-		self.conn = sqlite3.connect("j_edict.db")
+		self.conn = sqlite3.connect(".resources/j_edict.db")
 		self.cur = self.conn.cursor()
 
 		self.kanji_dictionary = kanjidic.Kanjidic()
