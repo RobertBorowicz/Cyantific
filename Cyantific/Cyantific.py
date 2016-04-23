@@ -5,6 +5,7 @@ import Image, ImageTk
 import cv2
 from ttk import Frame, Button, Label, Style, Entry
 import ImageHandler as IH
+from random import randint
 
 
 class Cyantific(Frame):
@@ -23,8 +24,9 @@ class Cyantific(Frame):
         self.cropButton = Button(self)
         self.OCRButton = Button(self)
         self.BWSlider = tk.Scale(self)
-        self.XScroll = tk.Scrollbar(self)
-        self.YScroll = tk.Scrollbar(self)
+        self.BWButton = Button(self)
+        #self.XScroll = tk.Scrollbar(self)
+        #self.YScroll = tk.Scrollbar(self)
 
         self.canvas = None
         self.cropRect = None
@@ -37,6 +39,8 @@ class Cyantific(Frame):
         self.initUI()
         self.filename = None
         self.image_dims = None
+
+        self.converting_bw = False
 
     def initUI(self):
         self.pack(fill=tk.BOTH, expand=True)
@@ -57,10 +61,10 @@ class Cyantific(Frame):
         self.canvas.bind("<B1-Motion>", self.on_move_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        self.XScroll.config(orient=tk.HORIZONTAL)
-        self.YScroll.config(orient=tk.VERTICAL)
-        self.XScroll.grid(row=0, column=1)
-        self.YScroll.grid(row=2, column=0)
+        #self.XScroll.config(orient=tk.HORIZONTAL)
+        #self.YScroll.config(orient=tk.VERTICAL)
+        #self.XScroll.grid(row=0, column=1)
+        #self.YScroll.grid(row=2, column=0)
 
         #self.GUIFrame.grid(row=0, column=1)
 
@@ -71,15 +75,23 @@ class Cyantific(Frame):
         
         #Cropping elements
         #self.cropFrame.grid(row=0, column=1)
-        self.cropButton.config(text="Start Cropping", command=self.set_cropping)
+        self.cropButton.config(text="Start Cropping", command=self.set_cropping, state=tk.DISABLED)
         self.cropButton.grid(row=5, column=4, pady=4)
 
-        self.OCRButton.config(text="OCR Image", command=self.OCR_image)
+        self.OCRButton.config(text="OCR Image", command=self.OCR_image, state=tk.DISABLED)
         self.OCRButton.grid(row=5, column=5, padx=5)
 
-        self.BWSlider.config(from_=0, to=255, orient=tk.HORIZONTAL, label="B&W Threshold")
+        self.BWSlider.config(from_=0, to=255, orient=tk.HORIZONTAL, label="B&W Threshold", command=self.slider_update_bw, state=tk.DISABLED)
+        self.BWSlider.set(128)
         self.BWSlider.grid(row=4, column=4)
+        self.BWButton.config(text="Convert to B&W", command=self.start_bw, state=tk.DISABLED)
+        self.BWButton.grid(row=4, column=5)
 
+
+    def slider_update_bw(self, event):
+        thresh = self.BWSlider.get()
+        if (self.converting_bw):
+            self.black_and_white(thresh)
 
     def draw_image(self, path=None):
         fpath = None
@@ -88,9 +100,17 @@ class Cyantific(Frame):
         else:
             fpath = path
 
-        self.imageHandler.set_image(fpath)
+        self.imageHandler.init_image(fpath)
 
         self.im = Image.open(fpath)
+        dimX, dimY = self.im.size
+        self.image_dims = (dimY, dimX)
+        self.tk_im = ImageTk.PhotoImage(self.im)
+        self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)
+        self.canvas.config(width=dimX, height=dimY)
+
+    def draw_from_array(self, image):
+        self.im = Image.fromarray(image)
         dimX, dimY = self.im.size
         self.image_dims = (dimY, dimX)
         self.tk_im = ImageTk.PhotoImage(self.im)
@@ -118,7 +138,8 @@ class Cyantific(Frame):
         if self.filename:
             self.draw_image(self.filename)
             self.cropButton.config(state=tk.NORMAL)
-        print self.BWSlider.get()
+            self.OCRButton.config(state=tk.NORMAL)
+            self.BWButton.config(state=tk.NORMAL)
 
 
     def on_button_release(self, event):
@@ -163,13 +184,20 @@ class Cyantific(Frame):
         c2 = cols-1 if (c2 > cols) else c2
         r2 = rows-1 if (r2 > rows) else r2
 
-        path = self.imageHandler.crop_image(r1, c1, r2, c2)
+        image = self.imageHandler.crop_image(r1, c1, r2, c2)
         self.cropRect = None
-        self.draw_image(path)
+        self.draw_from_array(image)
+
+    def start_bw(self):
+        if not self.converting_bw:
+            self.BWSlider.config(state=tk.NORMAL)
+        else:
+            self.BWSlider.config(state=tk.DISABLED)
+        self.converting_bw = (not self.converting_bw)
 
     def black_and_white(self, thresh=128):
-        path = self.imageHandler.black_and_white(thresh)
-        self.draw_image(path)
+        image = self.imageHandler.black_and_white(thresh)
+        self.draw_from_array(image)
 
     def OCR_image(self):
         self.imageHandler.OCR()
