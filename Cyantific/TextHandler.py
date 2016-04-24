@@ -23,7 +23,26 @@ class TextHandler(object):
 	"""
 	def kanji_search(self, kanji):
 
-		key = kanji.decode("utf-8")
+		if len(kanji) == None:
+			print "Nothin Found"
+			return None
+
+		entries = []
+		for k in kanji:
+			keys = list(k)
+			for key in keys:
+				entry = self.kanji_dictionary.get(key, None)
+				if not entry:
+					return None
+				else:
+					gloss = ', '.join(entry.gloss)
+					on_read = ', '.join(entry.on_readings)
+					kun_read = ', '.join(entry.kun_readings)
+					radicals = ', '.join(self.radical_dictionary[key])
+					entries.append((key, gloss, on_read, kun_read, radicals))
+		return entries
+		#key = kanji.decode("utf-8")
+		"""key = None
 		entry = self.kanji_dictionary.get(key, None)
 		if not entry:
 			return None
@@ -32,7 +51,7 @@ class TextHandler(object):
 			on_read = ', '.join(entry.on_readings)
 			kun_read = ', '.join(entry.kun_readings)
 			radicals = ', '.join(self.radical_dictionary[key])
-			return gloss, on_read, kun_read, radicals
+			return gloss, on_read, kun_read, radicals"""
 
 	"""
 		Simple method to perform a SQL dictionary lookup for a word
@@ -46,18 +65,21 @@ class TextHandler(object):
 		for word in kanjiList:
 
 			compound = None
+			word = u''.join(word)
 			#Format the search string
 			#My code is just awful, but sqlite3 was being very frustrating
 			if entrytype == 0:
-				compound = str('%s' %word)
+				#compound = str('%s' %word)
+				compound = word
 			elif entrytype == 1:
-				compound = str('%s%%' %word)
+				#compound = str('%s%%' %word)
+				compound = word + "%"
 			elif entrytype == 2:
 				compound = str('%%%s' %word)
 			elif entrytype == 3:
 				compound = str('%%%s%%' %word)
 
-			self.cur.execute("SELECT * FROM edict WHERE kanji LIKE ?", (compound.decode("utf-8"),))
+			self.cur.execute("SELECT * FROM edict WHERE kanji LIKE ?", (compound,))
 			definitions.append(self.cur.fetchall()[:5])
 
 		return definitions

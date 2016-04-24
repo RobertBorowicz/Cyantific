@@ -25,8 +25,8 @@ class Cyantific(Frame):
         self.OCRButton = Button(self)
         self.BWSlider = tk.Scale(self)
         self.BWButton = Button(self)
-        #self.XScroll = tk.Scrollbar(self)
-        #self.YScroll = tk.Scrollbar(self)
+        self.XScroll = tk.Scrollbar(self)
+        self.YScroll = tk.Scrollbar(self)
 
         self.canvas = None
         self.cropRect = None
@@ -54,17 +54,17 @@ class Cyantific(Frame):
         label.grid(sticky=tk.W+tk.S, pady=4, padx=5)
 
         self.canvas = tk.Canvas(self)
-        self.canvas.config(cursor="cross", scrollregion=self.canvas.bbox(tk.ALL))
-        self.canvas.grid(row=1, column=1, columnspan=2, rowspan=4)
+        self.canvas.config(cursor="cross", xscrollcommand=self.XScroll.set, yscrollcommand=self.YScroll.set)
+        self.canvas.grid(row=1, column=1, columnspan=2, rowspan=4, sticky=tk.N+tk.S+tk.E+tk.W)
         #self.canvas.pack(side="top", fill="both", expand=True)
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_move_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        #self.XScroll.config(orient=tk.HORIZONTAL)
-        #self.YScroll.config(orient=tk.VERTICAL)
-        #self.XScroll.grid(row=0, column=1)
-        #self.YScroll.grid(row=2, column=0)
+        self.XScroll.config(orient=tk.HORIZONTAL, command=self.canvas.xview, width=20)
+        self.YScroll.config(orient=tk.VERTICAL, command=self.canvas.yview, width=20)
+        self.XScroll.grid(row=0, column=1, columnspan=2)
+        self.YScroll.grid(row=2, column=0, rowspan=4)
 
         #self.GUIFrame.grid(row=0, column=1)
 
@@ -84,7 +84,7 @@ class Cyantific(Frame):
         self.BWSlider.config(from_=0, to=255, orient=tk.HORIZONTAL, label="B&W Threshold", command=self.slider_update_bw, state=tk.DISABLED)
         self.BWSlider.set(128)
         self.BWSlider.grid(row=4, column=4)
-        self.BWButton.config(text="Convert to B&W", command=self.start_bw, state=tk.DISABLED)
+        self.BWButton.config(text="Convert to B&W", command=self.toggle_bw, state=tk.DISABLED)
         self.BWButton.grid(row=4, column=5)
 
 
@@ -104,6 +104,7 @@ class Cyantific(Frame):
 
         self.im = Image.open(fpath)
         dimX, dimY = self.im.size
+        self.canvas.config(scrollregion=(0, 0, dimX, dimY))
         self.image_dims = (dimY, dimX)
         self.tk_im = ImageTk.PhotoImage(self.im)
         self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)
@@ -112,6 +113,7 @@ class Cyantific(Frame):
     def draw_from_array(self, image):
         self.im = Image.fromarray(image)
         dimX, dimY = self.im.size
+        print dimX, dimY
         self.image_dims = (dimY, dimX)
         self.tk_im = ImageTk.PhotoImage(self.im)
         self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)
@@ -119,6 +121,7 @@ class Cyantific(Frame):
 
     def on_button_press(self, event):
         if self.cropping:
+            print self.XScroll.get()
             self.startX = event.x
             self.startY = event.y
 
@@ -181,18 +184,26 @@ class Cyantific(Frame):
         rows = self.image_dims[0]
         c1 = 0 if (c1 < 0) else c1
         r1 = 0 if (r1 < 0) else r1
-        c2 = cols-1 if (c2 > cols) else c2
-        r2 = rows-1 if (r2 > rows) else r2
+        c2 = cols-1 if (c2 >= cols) else c2
+        r2 = rows-1 if (r2 >= rows) else r2
 
         image = self.imageHandler.crop_image(r1, c1, r2, c2)
         self.cropRect = None
         self.draw_from_array(image)
 
-    def start_bw(self):
+    def toggle_bw(self):
         if not self.converting_bw:
             self.BWSlider.config(state=tk.NORMAL)
+            self.BWButton.config(text="Save Change")
+            self.cropButton.config(state=tk.DISABLED)
+            self.OCRButton.config(state=tk.DISABLED)
         else:
             self.BWSlider.config(state=tk.DISABLED)
+            self.BWButton.config(text="Convert to B&W")
+            self.cropButton.config(state=tk.NORMAL)
+            self.OCRButton.config(state=tk.NORMAL)
+            self.imageHandler.converted = True
+            self.imageHandler.write_curr_image()
         self.converting_bw = (not self.converting_bw)
 
     def black_and_white(self, thresh=128):
