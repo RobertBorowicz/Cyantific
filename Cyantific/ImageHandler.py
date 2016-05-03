@@ -27,6 +27,7 @@ class ImageHandler(object):
 		else:
 			bw_im = self.original_image
 		self.current_image = bw_im = cv2.threshold(bw_im, thresh, 255, cv2.THRESH_BINARY)[1]
+
 		return bw_im
 
 	def set_image(self, imagePath):
@@ -37,9 +38,10 @@ class ImageHandler(object):
 		path = path=str("%s/current.jpg" %self.IMAGE_WRITE_PATH)
 		output = pytesseract.image_to_string(Image.open(path), lang=lang)
 		parsed = self.textHandler.form_compounds(output)
-		print "Parsed ", parsed
+		print "Parsed Compounds ", parsed
 		lookup = self.textHandler.dict_search(parsed, entrytype=1)
 		kanji = self.textHandler.kanji_search(parsed)
+
 		return parsed, lookup, kanji
 
 	def crop_image(self, row1, col1, row2, col2):
@@ -62,6 +64,7 @@ class ImageHandler(object):
 			self.converted = True
 			self.current_image = self.original_image = rotated_image
 			self.write_curr_image()
+
 		return rotated_image
 
 	def skew_image(self, points, newPoints, dx, dy):
@@ -71,8 +74,8 @@ class ImageHandler(object):
 		skewMat = cv2.getPerspectiveTransform(p1, p2)
 
 		skewed = cv2.warpPerspective(self.current_image, skewMat, (dx,dy))
-
 		self.current_image = self.original_image = skewed
+
 		return skewed
 
 	def write_curr_image(self):

@@ -67,7 +67,7 @@ class TextHandler(object):
 			compound = None
 			word = u''.join(word)
 			#Format the search string
-			#My code is just awful, but sqlite3 was being very frustrating
+			#My code is just awful, but sqlite3 was being very frustrating, and python doesn't like formatting with utf-8
 			if entrytype == 0:
 				#compound = str('%s' %word)
 				compound = word
@@ -80,7 +80,7 @@ class TextHandler(object):
 				compound = str('%%%s%%' %word)
 
 			self.cur.execute("SELECT * FROM edict WHERE kanji LIKE ?", (compound,))
-			definitions.append(self.cur.fetchall()[:5])
+			definitions.append(self.cur.fetchall()[:3])
 
 		return definitions
 

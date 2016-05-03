@@ -3,7 +3,7 @@ import Tkinter as tk
 from tkFileDialog import askopenfilename
 import Image, ImageTk
 import cv2
-from ttk import Frame, Button, Label, Style, Entry
+from ttk import Frame, Button, Label
 import ImageHandler as IH
 from random import randint
 import numpy as np
@@ -29,8 +29,8 @@ class Cyantific(Frame):
         self.BWButton = Button(self)
         self.RButton = Button(self)
         self.RSlider = tk.Scale(self)
-        """self.XScroll = tk.Scrollbar(self)
-        self.YScroll = tk.Scrollbar(self)"""
+        #self.XScroll = tk.Scrollbar(self)
+        #self.YScroll = tk.Scrollbar(self)
         self.TextField = tk.Text(self)
         self.SaveButton = Button(self)
         self.SkewButton = Button(self)
@@ -77,10 +77,10 @@ class Cyantific(Frame):
         self.canvas.bind("<B1-Motion>", self.on_move_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        """self.XScroll.config(orient=tk.HORIZONTAL, command=self.canvas.xview, width=20)
-        self.YScroll.config(orient=tk.VERTICAL, command=self.canvas.yview, width=20)
-        self.XScroll.grid(row=0, column=1, columnspan=2)
-        self.YScroll.grid(row=2, column=0, rowspan=4)"""
+        #self.XScroll.config(orient=tk.HORIZONTAL, command=self.canvas.xview, width=20)
+        #self.YScroll.config(orient=tk.VERTICAL, command=self.canvas.yview, width=20)
+        #self.XScroll.grid(row=0, column=1, columnspan=2)
+        #self.YScroll.grid(row=2, column=0, rowspan=4)
 
         #self.GUIFrame.grid(row=0, column=1)
 
@@ -346,6 +346,8 @@ class Cyantific(Frame):
                 self.TextField.insert('end', "\n\n")
             index += 1
             kindex += len(word)
+            more_info = "For more detailed kanji information for\'" + word + "\', see jisho.org/search/" + word + " %23kanji\n\n"
+            self.TextField.insert('end', more_info)
         self.master_text = self.TextField.get('1.0', 'end')
 
     def write_to_file(self):
