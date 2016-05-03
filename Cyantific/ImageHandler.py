@@ -13,13 +13,13 @@ class ImageHandler(object):
 		self.current_image = None
 		self.original_image = None
 		self.textHandler = TH.TextHandler()
-		self.converted = False
+		self.converted = True
 
 	def init_image(self, imagePath):
-		self.original_image = cv2.imread(imagePath)
+		self.original_image = cv2.imread(imagePath, cv2.CV_LOAD_IMAGE_GRAYSCALE)
 		self.current_image = self.original_image
 		self.write_curr_image()
-		self.converted = False
+		self.converted = True
 
 	def black_and_white(self, thresh=128):
 		if not self.converted:
@@ -65,6 +65,19 @@ class ImageHandler(object):
 			self.current_image = self.original_image = rotated_image
 			self.write_curr_image()
 		return rotated_image
+
+	def skew_image(self, points, newPoints, dx, dy):
+	
+		p1 = np.float32(points)
+		p2 = np.float32(newPoints)
+		skewMat = cv2.getPerspectiveTransform(p1, p2)
+
+		skewed = cv2.warpPerspective(self.current_image, skewMat, (dx,dy))
+
+		self.current_image = self.original_image = skewed
+		return skewed
+
+
 
 	def write_curr_image(self):
 		self.original_image = self.current_image

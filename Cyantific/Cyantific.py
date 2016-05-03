@@ -6,6 +6,8 @@ import cv2
 from ttk import Frame, Button, Label, Style, Entry
 import ImageHandler as IH
 from random import randint
+import numpy as np
+from math import sqrt
 
 
 class Cyantific(Frame):
@@ -31,6 +33,7 @@ class Cyantific(Frame):
         self.YScroll = tk.Scrollbar(self)"""
         self.TextField = tk.Text(self)
         self.SaveButton = Button(self)
+        self.SkewButton = Button(self)
 
         self.canvas = None
         self.cropRect = None
@@ -39,6 +42,10 @@ class Cyantific(Frame):
         self.cropping = False
         self.rotating = False
 
+        self.skewRects = []
+        self.skewPoints = np.zeros(shape=(4,2), dtype=np.float)
+        self.newPoints = np.zeros(shape=(4,2), dtype=np.float)
+
         self.imageHandler = IH.ImageHandler()
 
         self.initUI()
@@ -46,6 +53,8 @@ class Cyantific(Frame):
         self.image_dims = None
 
         self.converting_bw = False
+        self.skewing = False
+        self.skewdex = 0
 
         self.master_text = None
 
@@ -99,6 +108,9 @@ class Cyantific(Frame):
         self.RButton.config(text="Rotate Image", command=self.toggle_rot, state=tk.DISABLED)
         self.RButton.grid(row=3, column=5)
 
+        self.SkewButton.config(text="Fix Skew", command=self.set_skewing, state=tk.DISABLED)
+        self.SkewButton.grid(row=2,column=4)
+
         self.TextField.grid(row=2,column=6,rowspan=3,columnspan=4)
         self.SaveButton.config(text="Save to File", command=self.write_to_file, state=tk.DISABLED)
         self.SaveButton.grid(row=5,column=6)
@@ -147,6 +159,14 @@ class Cyantific(Frame):
 
             if not self.cropRect:
             	self.cropRect = self.canvas.create_rectangle(0, 0, 1, 1, fill="", outline="red", width=3)
+        elif self.skewing:
+            self.px = event.x
+            self.py = event.y
+
+            if not self.skewRects:
+                self.skewRects = []
+                for x in range(0, 4):
+                    self.skewRects.append(self.canvas.create_rectangle(0,0,1,1,fill="green"))
 
     def on_move_press(self, event):
         if self.cropping:
@@ -164,10 +184,41 @@ class Cyantific(Frame):
             self.OCRButton.config(state=tk.NORMAL)
             self.BWButton.config(state=tk.NORMAL)
             self.RButton.config(state=tk.NORMAL)
+            self.SkewButton.config(state=tk.NORMAL)
 
 
     def on_button_release(self, event):
-        pass
+        if self.cropping:
+            pass
+        elif self.skewing and self.skewdex <= 3:
+            self.canvas.coords(self.skewRects[self.skewdex], self.px-5, self.py-5, self.px+5, self.py+5)
+            self.skewPoints[self.skewdex] = (self.px, self.py)
+            self.skewdex += 1
+        if self.skewdex == 4:
+            self.SkewButton.config(state=tk.NORMAL)
+            x1, y1 = self.skewPoints[0]
+            x2, y2 = self.skewPoints[1]
+            x3, y3 = self.skewPoints[2]
+            self.dx = int(round(sqrt((x2-x1)**2 + (y2-y1)**2)))
+            self.dy = int(round(sqrt((x1-x3)**2 + (y1-y3)**2)))
+
+            self.newPoints[0] = (0, 0)
+            self.newPoints[1] = (self.dx, 0)
+            self.newPoints[2] = (0, self.dy)
+            self.newPoints[3] = (self.dx, self.dy)
+
+    def set_skewing(self):
+        if not self.skewing:
+            self.skewing = True
+            self.SkewButton.config(text="Skew")
+            self.BWButton.config(state=tk.DISABLED)
+            self.RButton.config(state=tk.DISABLED)
+            self.cropButton.config(state=tk.DISABLED)
+        else:
+            self.BWButton.config(state=tk.NORMAL)
+            self.RButton.config(state=tk.NORMAL)
+            self.cropButton.config(state=tk.NORMAL)
+            self.skew_image()
 
     def set_cropping(self):
         if not self.cropping:
@@ -251,6 +302,11 @@ class Cyantific(Frame):
 
     def rotate_image(self, degrees=0, save=False):
         image = self.imageHandler.rotate_image(degrees, save)
+        self.draw_from_array(image)
+
+    def skew_image(self):
+        self.imageHandler.converted = True
+        image = self.imageHandler.skew_image(self.skewPoints, self.newPoints, self.dx, self.dy)
         self.draw_from_array(image)
 
     def OCR_image(self):
