@@ -27,11 +27,10 @@ class ImageHandler(object):
 		else:
 			bw_im = self.original_image
 		self.current_image = bw_im = cv2.threshold(bw_im, thresh, 255, cv2.THRESH_BINARY)[1]
-		#path = str("%s/bw.jpg" %self.IMAGE_WRITE_PATH)
 		return bw_im
 
 	def set_image(self, imagePath):
-		self.current_image = cv2.imread(imagePath)#, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+		self.current_image = cv2.imread(imagePath, cv2.CV_LOAD_IMAGE_GRAYSCALE)
 		self.write_curr_image()
 
 	def OCR(self, lang='jpn'):
@@ -45,7 +44,6 @@ class ImageHandler(object):
 
 	def crop_image(self, row1, col1, row2, col2):
 		self.current_image = self.original_image = cropped_image = self.current_image[row1:row2, col1:col2]
-		#path = str("%s/cropped.jpg" %self.IMAGE_WRITE_PATH)
 		self.write_curr_image()
 		if not self.converted:
 			return cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
@@ -76,8 +74,6 @@ class ImageHandler(object):
 
 		self.current_image = self.original_image = skewed
 		return skewed
-
-
 
 	def write_curr_image(self):
 		self.original_image = self.current_image

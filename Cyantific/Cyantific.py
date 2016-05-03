@@ -42,7 +42,7 @@ class Cyantific(Frame):
         self.cropping = False
         self.rotating = False
 
-        self.skewRects = []
+        self.skewRects = None
         self.skewPoints = np.zeros(shape=(4,2), dtype=np.float)
         self.newPoints = np.zeros(shape=(4,2), dtype=np.float)
 
@@ -92,28 +92,28 @@ class Cyantific(Frame):
         #Cropping elements
         #self.cropFrame.grid(row=0, column=1)
         self.cropButton.config(text="Start Cropping", command=self.set_cropping, state=tk.DISABLED)
-        self.cropButton.grid(row=5, column=4, pady=4)
+        self.cropButton.grid(row=6, column=4, pady=4)
 
         self.OCRButton.config(text="OCR Image", command=self.OCR_image, state=tk.DISABLED)
-        self.OCRButton.grid(row=5, column=5, padx=5)
+        self.OCRButton.grid(row=6, column=5, padx=5)
 
         self.BWSlider.config(from_=0, to=255, orient=tk.HORIZONTAL, label="B&W Threshold", command=self.slider_update_bw, state=tk.DISABLED)
         self.BWSlider.set(128)
-        self.BWSlider.grid(row=4, column=4)
+        self.BWSlider.grid(row=5, column=4)
         self.BWButton.config(text="Convert to B&W", command=self.toggle_bw, state=tk.DISABLED)
-        self.BWButton.grid(row=4, column=5)
+        self.BWButton.grid(row=5, column=5)
 
         self.RSlider.config(from_=-180, to=180, orien=tk.HORIZONTAL, label="Rotation Deg.", command=self.slider_update_rot, state=tk.DISABLED)
-        self.RSlider.grid(row=3, column=4)
+        self.RSlider.grid(row=4, column=4, sticky=tk.N)
         self.RButton.config(text="Rotate Image", command=self.toggle_rot, state=tk.DISABLED)
-        self.RButton.grid(row=3, column=5)
+        self.RButton.grid(row=4, column=5)
 
         self.SkewButton.config(text="Fix Skew", command=self.set_skewing, state=tk.DISABLED)
-        self.SkewButton.grid(row=2,column=4)
+        self.SkewButton.grid(row=3,column=4)
 
         self.TextField.grid(row=2,column=6,rowspan=3,columnspan=4)
         self.SaveButton.config(text="Save to File", command=self.write_to_file, state=tk.DISABLED)
-        self.SaveButton.grid(row=5,column=6)
+        self.SaveButton.grid(row=5,column=7)
 
 
     def slider_update_bw(self, event):
@@ -219,6 +219,9 @@ class Cyantific(Frame):
             self.RButton.config(state=tk.NORMAL)
             self.cropButton.config(state=tk.NORMAL)
             self.skew_image()
+            self.skewdex = 0
+            self.skewing = False
+            self.skewRects = None
 
     def set_cropping(self):
         if not self.cropping:
