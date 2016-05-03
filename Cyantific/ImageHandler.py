@@ -39,7 +39,9 @@ class ImageHandler(object):
 		output = pytesseract.image_to_string(Image.open(path), lang=lang)
 		parsed = self.textHandler.form_compounds(output)
 		print "Parsed ", parsed
-		print "Lookup ", self.textHandler.dict_search(parsed, entrytype=1)
+		lookup = self.textHandler.dict_search(parsed, entrytype=1)
+		kanji = self.textHandler.kanji_search(parsed)
+		return parsed, lookup, kanji
 
 	def crop_image(self, row1, col1, row2, col2):
 		self.current_image = self.original_image = cropped_image = self.current_image[row1:row2, col1:col2]
@@ -50,6 +52,22 @@ class ImageHandler(object):
 		else:
 			return cropped_image
 
+	def rotate_image(self, degrees, save=False):
+		rows, cols = self.current_image.shape[:2]
+		M = cv2.getRotationMatrix2D((cols/2, rows/2), degrees, 1)
+		if not self.converted:
+			rotated_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+		else:
+			rotated_image = self.current_image
+		rotated_image = cv2.warpAffine(rotated_image, M, (cols,rows))
+		if save:
+			self.converted = True
+			self.current_image = self.original_image = rotated_image
+			self.write_curr_image()
+		return rotated_image
+
 	def write_curr_image(self):
+		self.original_image = self.current_image
 		path=str("%s/current.jpg" %self.IMAGE_WRITE_PATH)
 		cv2.imwrite(path, self.current_image)
+
